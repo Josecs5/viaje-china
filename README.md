@@ -2,8 +2,9 @@
 
 PWA con modo offline para planificar un viaje a China: vuelos con escalas,
 transportes (trenes de alta velocidad, autobuses, DiDi…), alojamientos,
-excursiones, sitios para comer, lugares que ver y espectáculos — **todo
-editable desde el móvil**, sin datos precargados. Genera un **itinerario
+excursiones, sitios para comer, lugares que ver y espectáculos, **precargados
+y de solo lectura** (no se pueden añadir, editar ni borrar desde el móvil:
+así nadie los cambia por error). Genera un **itinerario
 diario** automático que ordena cada elemento por hora y marca la
 **viabilidad de cada día** (luz disponible con SunCalc, en hora de Pekín, y
 tiempo de trayecto entre paradas; los trenes cuentan como hora fija con
@@ -24,7 +25,8 @@ con las noches de tu estancia que coinciden con los días de función) y tus
 **notas**. Datos incluye la checklist de **tareas antes de viajar** (entrada
 sin visado, pasaporte, tarjeta de llegada, Alipay y WeChat Pay, mapas
 offline de Amap, eSIM, facturación de los vuelos…) y una **lista de
-equipaje** con checklist, ítems propios y borrado.
+equipaje**: en las dos solo se marca y desmarca. Lo que sí se edita desde el
+móvil: los **gastos**, el **diario** de cada día y las **notas** propias.
 
 Pensada para China: cada alojamiento, sitio para comer, lugar o espectáculo
 tiene su **nombre y dirección en caracteres chinos**, y el botón **«Enseñar al
@@ -49,11 +51,13 @@ compartir → **Añadir a pantalla de inicio**. Se abre en modo standalone.
 La app viene con el **viaje real precargado**: fechas (7–23 de mayo de
 2027), los cinco viajeros (solo el nombre de pila: la web es pública) y los
 vuelos de ida (Lufthansa, Madrid → Frankfurt → Shanghái Pudong) y vuelta
-(Air China, Pekín → Madrid) con su equipaje. Todo es editable. Añade
-alojamientos (con su ciudad y ubicación), transportes y excursiones desde la
-pestaña Datos, y el resto (itinerario, dónde comer, espectáculos cercanos)
-se genera solo. Los datos precargados se aplican una sola vez y solo añaden
-lo que falte: no pisan nada de quien ya tuviera la app guardada. Ábrela al menos una vez con conexión antes de salir: así queda
+(Air China, Pekín → Madrid) con su equipaje. La pestaña Datos es de **solo
+lectura**: los alojamientos, transportes, excursiones, sitios para comer y
+lugares nuevos se cargan en el código (`app.js`, junto a `VUELOS_SEED`)
+subiendo `SEED_V`, y el resto (itinerario, dónde comer, espectáculos
+cercanos) se genera solo. Los datos precargados se aplican una sola vez por
+versión y solo añaden lo que falte: no pisan nada de quien ya tuviera la app
+guardada. Ábrela al menos una vez con conexión antes de salir: así queda
 guardada y arranca sin cobertura.
 
 ### Coordenadas: WGS-84 y GCJ-02

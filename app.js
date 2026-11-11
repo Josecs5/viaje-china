@@ -831,7 +831,16 @@
   }
 
   /* ---------- Hoja genérica ---------- */
+  // Los datos del viaje (pestaña Datos: vuelos, transportes, alojamientos,
+  // excursiones, comidas, lugares, espectáculos, fechas y viajeros) son de
+  // SOLO LECTURA: no se añaden, editan ni borran desde el móvil. Se cargan en
+  // el código como datos precargados (VUELOS_SEED…). Solo los gastos y las
+  // notas propias siguen siendo editables.
+  const EDITABLE_KINDS = ['gasto', 'nota'];
+  const isEditable = kind => EDITABLE_KINDS.includes(kind);
+
   function openSheet(kind, id) {
+    if (!isEditable(kind)) return;
     if (kind === 'vuelo') return openFlightSheet(id);
     const sch = SCHEMAS[kind];
     let item = {};
@@ -939,6 +948,7 @@
   }
 
   async function removeItem(kind, id) {
+    if (!isEditable(kind)) return;
     const col = COL_OF[kind];
     const it = state[col].find(x => x.id === id);
     if (!it) return;
@@ -1072,11 +1082,6 @@
       stat(state.vuelos.length, state.vuelos.length === 1 ? 'vuelo' : 'vuelos') +
       stat(state.alojamientos.length, state.alojamientos.length === 1 ? 'alojamiento' : 'alojamientos') +
       `</div>`;
-    const b = el('button', 'btn btn--sm trip-hero__edit');
-    b.type = 'button';
-    b.innerHTML = ICON.edit + ' Fechas y viajeros';
-    b.addEventListener('click', () => openSheet('meta'));
-    c.appendChild(b);
     return c;
   }
 
@@ -1121,11 +1126,6 @@
     const sch = SCHEMAS[kind];
     const { g, body } = groupShell('open_' + col, sch.ico, label, items.length, sch.color);
     body.appendChild(itemList(kind, items, summarize));
-    const add = el('button', 'btn btn--add btn--block');
-    add.type = 'button';
-    add.innerHTML = ICON.plus + ' Añadir ' + esc(sch.sing);
-    add.addEventListener('click', () => openSheet(kind));
-    body.appendChild(add);
     return g;
   }
 
@@ -1133,7 +1133,7 @@
     const list = el('div', 'list');
     if (!items.length) {
       const e = el('div', 'empty');
-      e.textContent = 'Aún no has añadido nada aquí.';
+      e.textContent = isEditable(kind) ? 'Aún no has añadido nada aquí.' : 'Todavía no hay nada cargado aquí.';
       list.appendChild(e);
     } else {
       items.slice().sort(itemSorter(COL_OF[kind])).forEach(it => list.appendChild(itemCard(kind, it, summarize(it))));
@@ -1146,6 +1146,7 @@
     const main = el('div', 'item__main');
     main.innerHTML = summaryHtml;
     c.appendChild(main);
+    if (!isEditable(kind)) return c; // datos del viaje: solo lectura
     const acts = el('div', 'item__acts');
     const edit = el('button', 'icon-btn');
     edit.type = 'button';
@@ -1340,38 +1341,12 @@
             save();
             renderDatos();
           });
-          const del = el('button', 'icon-btn icon-btn--danger');
-          del.type = 'button';
-          del.setAttribute('aria-label', 'Eliminar «' + it.texto + '»');
-          del.innerHTML = ICON.trash;
-          del.addEventListener('click', async ev => {
-            ev.preventDefault();
-            const ok = await confirmAsk('¿Eliminar «' + it.texto + '» de la lista?');
-            if (!ok) return;
-            state[cfg.col] = state[cfg.col].filter(x => x.id !== it.id);
-            save();
-            renderDatos();
-          });
-          row.appendChild(del);
+          // Solo se marca y desmarca: los ítems no se borran ni se añaden.
           list.appendChild(row);
         });
         body.appendChild(list);
       });
     }
-    const addRow = el('form', 'check-add');
-    addRow.innerHTML = `<input type="text" placeholder="Añadir a la lista…" maxlength="120" aria-label="Nuevo elemento"><button type="submit" class="btn btn--ghost">${ICON.plus} Añadir</button>`;
-    addRow.addEventListener('submit', e => {
-      e.preventDefault();
-      const input = addRow.querySelector('input');
-      const texto = input.value.trim();
-      if (!texto) return;
-      state[cfg.col].push(cfg.newItem(texto));
-      save();
-      renderDatos();
-      const again = $(`#datos-body .group[data-col="${cfg.col}"] .check-add input`);
-      if (again) again.focus();
-    });
-    body.appendChild(addRow);
     g.dataset.col = cfg.col;
     return g;
   }
@@ -1379,8 +1354,7 @@
   function equipajeBlock() {
     return checklistBlock({
       col: 'equipaje', openKey: 'open_equipaje', ico: '包', label: 'Equipaje', color: 'var(--jade)',
-      doneKey: 'packed',
-      newItem: texto => ({ id: uid(), texto, cat: 'Míos', packed: false })
+      doneKey: 'packed'
     });
   }
 
@@ -1413,8 +1387,7 @@
         if (it.nota) bits.push(withCheck(it.nota));
         if (f) bits.push('Suele abrirse 24 h antes: desde el ' + esc(f) + ' ' + CHECK);
         return bits.map(b => `<span class="check-note">${b}</span>`).join('');
-      },
-      newItem: texto => ({ id: uid(), texto, cat: 'Mías', hecho: false })
+      }
     });
   }
 
@@ -1947,7 +1920,7 @@
     const { fechaInicio, fechaFin } = state.meta;
     if (!fechaInicio || !fechaFin) {
       $('#itin-sub').textContent = '';
-      body.innerHTML = '<div class="empty">Añade las fechas del viaje en Datos y el itinerario se genera solo.</div>';
+      body.innerHTML = '<div class="empty">Todavía no hay fechas del viaje cargadas: cuando las haya, el itinerario se genera solo.</div>';
       return;
     }
     const it = buildItinerary();
@@ -1963,7 +1936,7 @@
 
     if (!state.alojamientos.some(a => hasXY(a.loc))) {
       const n = el('div', 'notice');
-      n.textContent = 'Pon la ubicación de los alojamientos para calcular la luz del día, los trayectos y el aviso de lluvia.';
+      n.textContent = 'Cuando estén cargados los alojamientos con su ubicación, aquí saldrán la luz del día, los trayectos y el aviso de lluvia.';
       body.appendChild(n);
     }
 
@@ -2014,7 +1987,7 @@
     const ul = el('ol', 'timeline');
     if (!day.items.length) {
       const li = el('li', 'tl');
-      li.innerHTML = '<span class="tl__time">—</span><div class="tl__sub">Día libre. Añade lugares, comidas o excursiones con esta fecha desde Datos.</div>';
+      li.innerHTML = '<span class="tl__time">—</span><div class="tl__sub">Día libre: todavía no hay planes para este día.</div>';
       ul.appendChild(li);
     }
     day.items.forEach((x, i) => {
@@ -2078,7 +2051,7 @@
     if (stops.length < 2) {
       const p = el('p', 'muted');
       p.style.fontSize = '.82rem';
-      p.textContent = stops.length ? 'Solo hay una parada con ubicación: no hay ruta que dibujar.' : 'Sin paradas con ubicación: añade coordenadas para ver la ruta del día.';
+      p.textContent = stops.length ? 'Solo hay una parada con ubicación: no hay ruta que dibujar.' : 'Sin paradas con ubicación: no hay ruta que dibujar.';
       wrap.appendChild(p);
       return wrap;
     }
@@ -2360,12 +2333,12 @@
 
     if (!state.comidas.length) {
       const e = el('div', 'empty');
-      e.innerHTML = 'Aún no tienes sitios para comer. Añádelos en <a href="#datos">Datos › Sitios para comer</a> con su ubicación, nombre en chino y precio medio, y aparecerán aquí ordenados por distancia a tu alojamiento.';
+      e.textContent = 'Todavía no hay sitios para comer cargados. Cuando los haya, aparecerán aquí por ciudad, ordenados por distancia al alojamiento.';
       body.appendChild(e);
     }
     if (state.comidas.length && !zonas.length) {
       const n = el('div', 'notice');
-      n.textContent = 'Pon la ubicación de tus alojamientos para ver la distancia a cada sitio y agruparlos por ciudad.';
+      n.textContent = 'Cuando estén cargados los alojamientos con su ubicación, los sitios se agruparán por ciudad con su distancia.';
       body.appendChild(n);
     }
     if (zonas.length && state.comidas.length) {
@@ -2555,7 +2528,7 @@
   /* ==========================================================
      Espectáculos locales (acrobacias, ópera de Pekín, ópera de Sichuan)
      Catálogo de teatros conocidos (coordenadas WGS-84 de OpenStreetMap,
-     11 nov 2026) + los que añadas tú. Los días que no se han podido
+     11 nov 2026) + los cargados en Datos. Los días que no se han podido
      confirmar en la web oficial van con [comprobar]: no se inventan horarios.
      ========================================================== */
   const TEATROS = [
@@ -2634,12 +2607,12 @@
     const todos = TEATROS.map(t => Object.assign({ catalogo: true }, t))
       .concat(state.espectaculos.map(s => Object.assign({}, s)));
     const n = el('div', 'notice');
-    n.innerHTML = `Teatros conocidos más los que añadas en Datos › Espectáculos, a menos de ${TEATRO_KM} km de cada alojamiento. Días, horarios y precios cambian: lo no confirmado va con ${CHECK}. Distancias en línea recta.`;
+    n.innerHTML = `Teatros conocidos y los espectáculos cargados en Datos, a menos de ${TEATRO_KM} km de cada alojamiento. Días, horarios y precios cambian: lo no confirmado va con ${CHECK}. Distancias en línea recta.`;
     body.appendChild(n);
 
     if (!zonas.length) {
       const e = el('div', 'empty');
-      e.textContent = 'Pon la ubicación de tus alojamientos y aquí aparecerán los espectáculos cercanos con las noches que te encajan.';
+      e.textContent = 'Cuando estén cargados los alojamientos con su ubicación, aquí saldrán los espectáculos cercanos y las noches que os encajan.';
       body.appendChild(e);
     }
     let alguno = false;
@@ -2664,7 +2637,7 @@
     });
     if (zonas.length && !alguno) {
       const e = el('div', 'empty');
-      e.textContent = 'No hay teatros del catálogo cerca de tus alojamientos. Añade los que encuentres en Datos › Espectáculos, con sus días de función.';
+      e.textContent = 'No hay teatros del catálogo cerca de tus alojamientos.';
       body.appendChild(e);
     }
     const sinLoc = state.espectaculos.filter(s => !hasXY(s.loc));
@@ -2674,11 +2647,6 @@
       body.appendChild(p);
       sinLoc.forEach(s => body.appendChild(espectaculoCard(s, 0, null, { alojs: [] })));
     }
-    const add = el('button', 'btn btn--add btn--block');
-    add.type = 'button';
-    add.innerHTML = ICON.plus + ' Añadir espectáculo';
-    add.addEventListener('click', () => openSheet('espectaculo'));
-    body.appendChild(add);
     flushQvMaps();
   }
   // Los mapas miden 0 con el bloque plegado: se dibujan al desplegarlo.
