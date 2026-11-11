@@ -796,7 +796,7 @@
     const tr = v && v.tramos && v.tramos.length ? v.tramos : [{}];
     tr.forEach((t, i) => wrap.appendChild(tramoCard(i + 1, t)));
     form.appendChild(wrap);
-    const add = el('button', 'btn btn--ghost btn--block');
+    const add = el('button', 'btn btn--add btn--block');
     add.type = 'button';
     add.innerHTML = ICON.plus + ' Añadir escala (otro tramo)';
     add.style.marginBottom = '14px';
@@ -958,7 +958,7 @@
 
   function taxiBtn(it, label) {
     if (!hasZh(it)) return '';
-    return `<button type="button" class="btn btn--xs btn--taxi" data-taxi="${esc(it.id)}">${ICON.taxi} Enseñar al taxista <span class="zh" lang="zh-Hans">出租车</span></button>`;
+    return `<button type="button" class="taxi-btn" data-taxi="${esc(it.id)}" aria-label="Enseñar al taxista"><span class="brush" lang="zh-Hans" aria-hidden="true">出租</span>Taxista</button>`;
   }
 
   function findById(id) {
@@ -1121,7 +1121,7 @@
     const sch = SCHEMAS[kind];
     const { g, body } = groupShell('open_' + col, sch.ico, label, items.length, sch.color);
     body.appendChild(itemList(kind, items, summarize));
-    const add = el('button', 'btn btn--ghost btn--block');
+    const add = el('button', 'btn btn--add btn--block');
     add.type = 'button';
     add.innerHTML = ICON.plus + ' Añadir ' + esc(sch.sing);
     add.addEventListener('click', () => openSheet(kind));
@@ -1397,7 +1397,7 @@
 
   function antesDeViajarBlock() {
     return checklistBlock({
-      col: 'antesDeViajar', openKey: 'open_antes', ico: '✓', label: 'Antes de viajar', color: 'var(--red)',
+      col: 'antesDeViajar', openKey: 'open_antes', ico: '备', label: 'Antes de viajar', color: 'var(--red)',
       doneKey: 'hecho',
       intro: () => {
         if (!state.meta.fechaFin || state.meta.fechaFin <= '2026-12-31') return document.createDocumentFragment();
@@ -1501,9 +1501,11 @@
     const name = it.nombre || (loc && loc.texto) || '';
     if (!hasXY(loc) && !nameZh && !(loc && loc.texto)) return '';
     const q = hasXY(loc) ? (nameZh || name) : (nameZh || (loc && loc.texto) || name);
-    return `<a class="btn btn--xs btn--accent" href="${esc(MAP.amap(loc, q))}" target="_blank" rel="noopener">${ICON.map} Amap</a>` +
-      `<a class="btn btn--xs" href="${esc(MAP.apple(loc, hasXY(loc) ? (name || q) : q))}" target="_blank" rel="noopener">Apple Maps</a>` +
-      `<a class="btn btn--xs btn--ghost" href="${esc(MAP.google(loc, q))}" target="_blank" rel="noopener">Google</a>`;
+    // Un solo control compacto en vez de tres botones sueltos.
+    return `<span class="maps" role="group" aria-label="Abrir en un mapa">` +
+      `<a class="maps__a maps__a--main" href="${esc(MAP.amap(loc, q))}" target="_blank" rel="noopener" aria-label="Abrir en Amap">${ICON.map} Amap</a>` +
+      `<a class="maps__a" href="${esc(MAP.apple(loc, hasXY(loc) ? (name || q) : q))}" target="_blank" rel="noopener" aria-label="Abrir en Apple Maps">Apple</a>` +
+      `<a class="maps__a" href="${esc(MAP.google(loc, q))}" target="_blank" rel="noopener" aria-label="Abrir en Google Maps">Google</a></span>`;
   }
 
   /* ==========================================================
@@ -1816,6 +1818,15 @@
     return { sk, legs, travelMin, endMin, finVisitas, missed, luz, trayecto, veredicto, inicio, sunsetMin };
   }
 
+  // Número de día en caracteres chinos (一, 二 … 十七, 二十三), para el sello del día.
+  function zhNum(n) {
+    const d = '零一二三四五六七八九';
+    if (n <= 0 || n > 99) return String(n);
+    if (n < 10) return d[n];
+    const t = Math.floor(n / 10), u = n % 10;
+    return (t > 1 ? d[t] : '') + '十' + (u ? d[u] : '');
+  }
+
   function hhmmFromMin(m) {
     if (m == null) return '';
     const t = Math.round(m);
@@ -1985,7 +1996,7 @@
     }
     if (rain && rain.mm >= 1) skyBits.push(`☂ ${String(Math.round(rain.mm * 10) / 10).replace('.', ',')} mm${rain.prob != null ? ' · ' + rain.prob + ' %' : ''}`);
     c.innerHTML =
-      `<header class="day__head"><div class="day__num"><small>Día</small><b>${day.idx}</b></div>` +
+      `<header class="day__head"><div class="day__num"><span class="day__zh${zhNum(day.idx).length > 2 ? ' day__zh--long' : ''}" lang="zh-Hans" aria-hidden="true">${zhNum(day.idx)}</span><small>Día ${day.idx}</small></div>` +
       `<div class="day__title"><h3 class="day__date">${cap(fmtDiaSemana(day.date))} ${fmtFecha(day.date, true)}</h3>` +
       `<p class="day__city">${a ? esc(a.ciudad || a.nombre) : 'Sin alojamiento esta noche'}</p>` +
       (skyBits.length ? `<p class="day__sky">${skyBits.map(s => `<span>${esc(s)}</span>`).join('')}</p>` : '') +
@@ -2168,7 +2179,7 @@
     const nV = state.viajeros.length;
     const dias = (state.meta.fechaInicio && state.meta.fechaFin) ? eachDay(state.meta.fechaInicio, state.meta.fechaFin).length : 0;
     hero.innerHTML =
-      `<p class="muted" style="font-size:.82rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em">Total gastado</p>` +
+      `<p class="money-hero__lbl">Total gastado · <span lang="zh-Hans">合计</span></p>` +
       `<p class="money-hero__tot">${fmtEUR(totEUR)}</p>` +
       `<p class="money-hero__alt">≈ ${fmtCNY(totCNY)}</p>` +
       `<p class="money-hero__per">${state.gastos.length} ${state.gastos.length === 1 ? 'gasto' : 'gastos'}${dias && totEUR ? ' · ' + fmtEUR(totEUR / dias) + ' por día de viaje' : ''}${nV > 1 && totEUR ? ' · ' + fmtEUR(totEUR / nV) + ' por viajero' : ''}</p>`;
@@ -2663,7 +2674,7 @@
       body.appendChild(p);
       sinLoc.forEach(s => body.appendChild(espectaculoCard(s, 0, null, { alojs: [] })));
     }
-    const add = el('button', 'btn btn--ghost btn--block');
+    const add = el('button', 'btn btn--add btn--block');
     add.type = 'button';
     add.innerHTML = ICON.plus + ' Añadir espectáculo';
     add.addEventListener('click', () => openSheet('espectaculo'));
@@ -2693,7 +2704,7 @@
     const body = $('#notas-body');
     body.innerHTML = '';
     body.appendChild(itemList('nota', state.notas, notaSummary));
-    const add = el('button', 'btn btn--ghost btn--block');
+    const add = el('button', 'btn btn--add btn--block');
     add.type = 'button';
     add.innerHTML = ICON.plus + ' Añadir nota';
     add.addEventListener('click', () => openSheet('nota'));
@@ -2868,7 +2879,7 @@
   /* ==========================================================
      Tema claro / oscuro
      ========================================================== */
-  const TEMA_COLOR = { light: '#f6f1e7', dark: '#14110e' };
+  const TEMA_COLOR = { light: '#9e2a22', dark: '#2a100d' }; // color de la cabecera
   const temaActual = () => (document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
   // Clave propia («china_tema»): el origen de GitHub Pages se comparte con viaje-tailandia.
   const TEMA_KEY = 'china_tema';

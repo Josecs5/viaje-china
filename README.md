@@ -77,10 +77,10 @@ app convierte a GCJ-02 **solo al generar los enlaces de Amap**. Por eso:
 | Archivo | Contenido |
 |---|---|
 | `index.html` | Estructura y meta tags PWA/iOS |
-| `style.css` | Tema «Tinta y bermellón» (papel de arroz, tinta, bermellón de sello y jade), con modo claro y oscuro; responsive, móvil primero |
+| `style.css` | Tema «Ciudad Prohibida»: rojo de muralla (宫墙红), oro de teja (琉璃黄), verde azulado (青绿), tinta y papel de arroz; sellos, greca 回纹 y pestañas con caracteres a pincel. Modo claro y oscuro; responsive, móvil primero |
 | `app.js` | Lógica: CRUD, motor de itinerario, gastos, dónde comer, conversión WGS-84 → GCJ-02 y enlaces a mapas, espectáculos, guías y registro del service worker |
 | `sw.js` | Service worker: precache del shell |
-| `vendor/` | Leaflet 1.9.4, SunCalc 1.9.0 y fuentes web (Fraunces y Manrope, OFL) servidos desde el repo |
+| `vendor/` | Leaflet 1.9.4, SunCalc 1.9.0 y fuentes web servidas desde el repo (OFL): Noto Serif SC (宋体) para títulos y Ma Shan Zheng (pincel) para sellos, ambas recortadas a los caracteres que usa el diseño (~60 KB en total), y Manrope para el texto. La lista de caracteres está en `vendor/fonts/fonts.css` |
 | `manifest.json` | Manifiesto PWA |
 | `icons/` | Iconos 192 / 512 / maskable + apple-touch-icon + SVG |
 

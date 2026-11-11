@@ -4,7 +4,7 @@
  */
 'use strict';
 
-const SHELL_CACHE = 'china-shell-v2';
+const SHELL_CACHE = 'china-shell-v3';
 // En GitHub Pages el origen (usuario.github.io) es compartido con otros
 // proyectos, como viaje-tailandia (sus cachés se llaman «shell-vN»), y
 // caches.keys() no está acotado por scope: solo se tocan las cachés propias.
@@ -13,8 +13,8 @@ const OWNED_CACHE = /^china-shell-v\d+$/;
 const SHELL_ASSETS = [
   './',
   './index.html',
-  './style.css?v=3',
-  './app.js?v=4',
+  './style.css?v=5',
+  './app.js?v=5',
   './manifest.json',
   './icons/icon.svg',
   './icons/icon-192.png',
@@ -29,8 +29,9 @@ const SHELL_ASSETS = [
   './vendor/leaflet/images/layers.png',
   './vendor/leaflet/images/layers-2x.png',
   './vendor/suncalc/suncalc.js',
-  './vendor/fonts/fonts.css',
-  './vendor/fonts/fraunces-latin.woff2',
+  './vendor/fonts/fonts.css?v=2',
+  './vendor/fonts/notoserifsc-sub.woff2',
+  './vendor/fonts/mashanzheng-sub.woff2',
   './vendor/fonts/manrope-latin.woff2'
 ];
 
