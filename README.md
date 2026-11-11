@@ -46,10 +46,14 @@ python -m http.server 8000
 Para instalarla como app en el móvil: ábrela en el navegador → menú de
 compartir → **Añadir a pantalla de inicio**. Se abre en modo standalone.
 
-La app arranca **vacía**: añade las fechas y los viajeros, tus vuelos,
-alojamientos (con su ciudad y ubicación) y excursiones desde la pestaña
-Datos, y el resto (itinerario, dónde comer, espectáculos cercanos) se
-genera solo. Ábrela al menos una vez con conexión antes de salir: así queda
+La app viene con el **viaje real precargado**: fechas (7–23 de mayo de
+2027), los cinco viajeros (solo el nombre de pila: la web es pública) y los
+vuelos de ida (Lufthansa, Madrid → Frankfurt → Shanghái Pudong) y vuelta
+(Air China, Pekín → Madrid) con su equipaje. Todo es editable. Añade
+alojamientos (con su ciudad y ubicación), transportes y excursiones desde la
+pestaña Datos, y el resto (itinerario, dónde comer, espectáculos cercanos)
+se genera solo. Los datos precargados se aplican una sola vez y solo añaden
+lo que falte: no pisan nada de quien ya tuviera la app guardada. Ábrela al menos una vez con conexión antes de salir: así queda
 guardada y arranca sin cobertura.
 
 ### Coordenadas: WGS-84 y GCJ-02

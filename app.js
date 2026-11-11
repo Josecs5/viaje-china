@@ -206,6 +206,63 @@
     return list;
   }
 
+  /* ---------- Viaje real precargado (mayo de 2027) ----------
+     La web es pública: solo nombres de pila. NUNCA apellidos, fechas de
+     nacimiento, números de pasaporte ni localizadores. Lo que no venía en la
+     reserva (horas de la escala en Frankfurt) se deja en blanco, sin inventar. */
+  const META_SEED = { fechaInicio: '2027-05-07', fechaFin: '2027-05-23' };
+  const VIAJEROS_SEED = ['Jose', 'Beatriz', 'David', 'Miguel', 'Sandra']
+    .map((nombre, i) => ({ id: 'seed-vi-' + (i + 1), nombre }));
+  const EQUIPAJE_VUELO = 'Por persona:\n' +
+    '· 1 accesorio personal: va debajo del asiento de delante.\n' +
+    '· 1 equipaje de mano de 20 × 40 × 55 cm, máx. 5 kg.\n' +
+    '· 1 maleta facturada de máx. 23 kg.';
+  const VUELOS_SEED = [
+    {
+      id: 'seed-vu-ida', tipo: 'Ida', reserva: '', antelacion: '', equipaje: EQUIPAJE_VUELO,
+      notas: 'Lufthansa, clase turista. 1 escala en Frankfurt (FRA); 15 h 55 min en total.\n' +
+        'La reserva no trae las horas de la escala en Frankfurt (llegada del LH1115 y salida del LH732): apúntalas al facturar [comprobar].\n' +
+        'Asientos: sin elegir; los asigna la aerolínea.',
+      tramos: [{
+        aerolinea: 'Lufthansa', numero: 'LH1115', clase: 'Turista',
+        origen: 'MAD', origenTerminal: '', destino: 'FRA', destinoTerminal: '',
+        salida: '2027-05-07T17:10', llegada: '', duracion: ''
+      }, {
+        aerolinea: 'Lufthansa', numero: 'LH732', clase: 'Turista',
+        origen: 'FRA', origenTerminal: '', destino: 'PVG', destinoTerminal: '',
+        salida: '', llegada: '2027-05-08T15:05', duracion: ''
+      }]
+    },
+    {
+      id: 'seed-vu-vuelta', tipo: 'Vuelta', reserva: '', antelacion: '', equipaje: EQUIPAJE_VUELO,
+      notas: 'Air China, clase turista. Directo, 12 h.\nAsientos: 52A, 52B, 52C, 52D y 52E.',
+      tramos: [{
+        aerolinea: 'Air China', numero: 'CA897', clase: 'Turista',
+        origen: 'PEK', origenTerminal: '', destino: 'MAD', destinoTerminal: '',
+        salida: '2027-05-23T15:00', llegada: '2027-05-23T21:00', duracion: '12 h'
+      }]
+    }
+  ];
+
+  // Versión de los datos precargados. aplicarSeeds solo AÑADE lo que falte,
+  // una vez por versión: no pisa nada que cada uno haya editado o borrado después.
+  const SEED_V = 1;
+  function aplicarSeeds(s) {
+    const v = s.seedV || 0;
+    if (v >= SEED_V) return false;
+    if (v < 1) {
+      if (!s.meta.fechaInicio && !s.meta.fechaFin) Object.assign(s.meta, META_SEED);
+      if (!s.viajeros.length) s.viajeros = clone(VIAJEROS_SEED);
+      const numeros = new Set(s.vuelos.flatMap(x => (x.tramos || []).map(t => t.numero)).filter(Boolean));
+      VUELOS_SEED.forEach(x => {
+        const ya = s.vuelos.some(y => y.id === x.id) || x.tramos.some(t => numeros.has(t.numero));
+        if (!ya) s.vuelos.push(clone(x));
+      });
+    }
+    s.seedV = SEED_V;
+    return true;
+  }
+
   // MIGRATIONS[n] lleva los datos de la versión n a la n+1. Nunca borra nada
   // del usuario: solo añade campos o cambia su forma.
   const MIGRATIONS = [
@@ -221,6 +278,7 @@
     return p;
   }
 
+  let seedsAplicadas = false;
   function load() {
     try {
       const raw = localStorage.getItem(STORE_KEY);
@@ -228,6 +286,7 @@
         const s = blankState();
         s.equipaje = clone(EQUIPAJE_SEED);
         s.antesDeViajar = clone(ANTES_SEED);
+        seedsAplicadas = aplicarSeeds(s);
         return s;
       }
       const p = migrate(JSON.parse(raw));
@@ -245,6 +304,7 @@
       COLS.forEach(c => { s[c] = Array.isArray(p[c]) ? p[c] : []; });
       // Conserva cualquier campo desconocido (p. ej. de una versión más nueva).
       Object.keys(p).forEach(k => { if (!(k in s)) s[k] = p[k]; });
+      seedsAplicadas = aplicarSeeds(s);
       return s;
     } catch (e) {
       console.warn('Estado ilegible, se reinicia.', e);
@@ -270,6 +330,7 @@
   // Si se cierra la app justo después de un cambio, que no se pierda. Solo
   // con un guardado pendiente: así otra pestaña abierta no pisa datos más nuevos.
   window.addEventListener('pagehide', () => { if (saveTimer) saveNow(); });
+  if (seedsAplicadas) save(); // deja guardados los datos precargados recién añadidos
 
   const COL_OF  = { vuelo: 'vuelos', transporte: 'transportes', alojamiento: 'alojamientos', excursion: 'excursiones', comida: 'comidas', lugar: 'lugares', espectaculo: 'espectaculos', gasto: 'gastos', nota: 'notas' };
   const KIND_OF = Object.fromEntries(Object.entries(COL_OF).map(([k, c]) => [c, k]));
@@ -1172,7 +1233,7 @@
       html += `<div class="fly-alert">Estar en el aeropuerto con <b>${esc(v.antelacion)}</b> de antelación.${llega}</div>`;
     }
     if (v.reserva) html += `<div class="item__meta">Localizador: <span class="mono">${esc(v.reserva)}</span></div>`;
-    if (v.notas) html += `<div class="item__meta">${escLines(v.notas)}</div>`;
+    if (v.notas) html += `<div class="item__meta">${withCheck(v.notas).split('\n').join('<br>')}</div>`;
     if (v.equipaje) html += `<details class="fly-bags"><summary>Equipaje incluido</summary><p>${esc(v.equipaje)}</p></details>`;
     return html + '</div>';
   }
@@ -1341,7 +1402,7 @@
       intro: () => {
         if (!state.meta.fechaFin || state.meta.fechaFin <= '2026-12-31') return document.createDocumentFragment();
         const n = el('div', 'notice notice--warn');
-        n.innerHTML = 'Tu viaje termina después del 31 dic 2026, cuando acaba la entrada sin visado vigente. Comprueba si se ha prorrogado antes de reservar ' + CHECK + '.';
+        n.innerHTML = 'Tu viaje es posterior al 31 dic 2026, cuando acaba la entrada sin visado vigente para pasaportes españoles. Comprueba en la web oficial si se ha prorrogado; si no, necesitaréis visado ' + CHECK + '.';
         return n;
       },
       extra: it => {
