@@ -1,0 +1,20 @@
+{
+  "name": "Viaje a China — Planificador",
+  "short_name": "China",
+  "description": "Planifica tu viaje a China: vuelos, trenes, alojamientos, excursiones, itinerario diario, gastos, dónde comer y guías prácticas.",
+  "lang": "es-ES",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "id": "/viaje-china/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f1e7",
+  "theme_color": "#f6f1e7",
+  "categories": ["travel", "productivity", "lifestyle"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
